@@ -8,9 +8,6 @@ const Button = (props) => {
   )
 }
 
-const Header = props => <h1>{props.text}</h1>
-
-
 const App = () => {
   const anecdotes = [
     'If it hurts, do it more often.',
@@ -22,7 +19,6 @@ const App = () => {
     'Programming without an extremely heavy use of console.log is same as if a doctor would refuse to use x-rays or blood tests when dianosing patients.'
   ]
 
-  
 
   const addVote = () => {
     const copy = [...array]
@@ -36,8 +32,8 @@ const App = () => {
   console.log(array)
   return (
     <div>
-      <Header text="Anecdote of the day" />
-      {anecdotes[selected]}
+      <div>{anecdotes[selected]} </div>
+      <div>has {array[selected]} votes</div>
       <Button text="vote" handleClick={addVote} />
       <Button text="next anecdote" handleClick={() => setSelected(Math.floor((Math.random() * 7) + 0))} />
     </div>
