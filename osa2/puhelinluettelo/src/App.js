@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import numberService from './services/persons'
-import axios from 'axios'
 
-const Note = (props) => {
-  return(
-    <div>
-      {props.name} {props.number}
-    </div>
-  )
-}
 
 const FilterForm = (props) => {
   return(
@@ -42,11 +34,56 @@ const NewPersonForm = (props) => {
   )
 }
 
+const Notification = (props) => {
+  const notificationStyle = {
+    color: 'green',
+    fontStyle: 'italic',
+    fontSize: 20,
+    borderStyle: 'solid',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    background: 'lightblue',
+    fontWeight: 'bold'
+  }
+
+  const notificationErrorStyle = {
+    color: 'red',
+    fontStyle: 'italic',
+    fontSize: 20,
+    borderStyle: 'solid',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    background: 'lightblue',
+    fontWeight: 'bold'
+  }
+
+  if (props.message === null) {
+    return null
+  }
+
+  if(props.message.includes('Information')){
+    return (
+      <div style={notificationErrorStyle}>
+        {props.message}
+      </div>
+    )
+  }
+  else {
+    return (
+      <div style={notificationStyle}>
+        {props.message}
+      </div>
+    )
+  }
+}
+
 const PersonsRendered = (props) => {
   return(
     <ul>
         {props.persons.map(object =>
-          <Note key={object.name} name={object.name} number={object.number}/>
+          <div key={object.id}>{object.name} {object.number} <button onClick={() => props.deletePerson(object)}>delete</button></div>
         )}
       </ul>
   )
@@ -58,13 +95,13 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [newMessage, setNewMessage] = useState(null)
 
 
   useEffect(() => {
     numberService
       .getNumbers()
         .then(initialPersons => {
-          console.log(initialPersons)
         setPersons(initialPersons)
       })
   }, [])
@@ -85,14 +122,55 @@ const App = () => {
           setPersons(persons.concat(returnedNumber))
           setNewName('')
           setNewNumber('')
+          setNewMessage(`Added ${nameObject.name}`)
+          setTimeout(() => {
+            setNewMessage(null)
+          }, 3000)
         })
       }
     else{
-      window.alert(`${newName} is already added to phonebook`)
+      if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
+        const numberToChange = persons.find(person => person.name === newName)
+        const updatedNameObject = {
+          name: newName,
+          number: newNumber
+        }
+        numberService
+          .updateNumber(numberToChange.id, updatedNameObject)
+          .then(returnedNumber => {
+            setPersons(persons.map(person => person.id !== numberToChange.id ? person : returnedNumber))
+            setNewName('')
+            setNewNumber('')
+            setNewMessage(`Updated ${updatedNameObject.name}`)
+            setTimeout(() => {
+              setNewMessage(null)
+            }, 3000)
+          })
+          .catch(error => {
+            setNewMessage(`Information of ${updatedNameObject.name} has already been removed from the server`)
+            setTimeout(() => {
+              setNewMessage(null)
+            }, 3000)
+          })
+      }
+      else{
+        setNewName('')
+        setNewNumber('')
+      }
     }
   }
-    
-  
+
+  const deletePerson = (person) => {
+    if(window.confirm(`Delete ${person.name}?`)){
+      numberService
+        .deleteNumber(person.id)
+        setPersons(persons.filter(onePerson => onePerson.id !== person.id))
+        setNewMessage(`Deleted ${person.name}`)
+        setTimeout(() => {
+          setNewMessage(null)
+        }, 3000)
+    }
+  }  
 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
@@ -110,6 +188,8 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
 
+      <Notification message={newMessage}/>
+
       <FilterForm handleFilterChange={handleFilterChange}
       newFilter={newFilter}/>
 
@@ -123,7 +203,8 @@ const App = () => {
 
       <h3>Numbers</h3>
       
-      <PersonsRendered persons={persons.filter(person => person.name.toUpperCase() !== newFilter.toUpperCase())}/>
+      <PersonsRendered deletePerson={deletePerson} 
+       persons={persons.filter(person => person.name.toUpperCase() !== newFilter.toUpperCase())}/>
     </div>
   )
 
