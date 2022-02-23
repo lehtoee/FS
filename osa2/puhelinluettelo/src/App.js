@@ -62,8 +62,7 @@ const Notification = (props) => {
   if (props.message === null) {
     return null
   }
-
-  if(props.message.includes('Information')){
+  if(props.message.includes('Information') || props.message.includes('`name`') || props.message.includes('`number`')){
     return (
       <div style={notificationErrorStyle}>
         {props.message}
@@ -123,6 +122,12 @@ const App = () => {
           setNewName('')
           setNewNumber('')
           setNewMessage(`Added ${nameObject.name}`)
+          setTimeout(() => {
+            setNewMessage(null)
+          }, 3000)
+        })
+        .catch(error => {
+          setNewMessage(`${error.response.data.error}`)
           setTimeout(() => {
             setNewMessage(null)
           }, 3000)
